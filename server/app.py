@@ -75,10 +75,10 @@ def check_hardware_status():
     # Check robot system availability
     if ROBOT_AVAILABLE:
         try:
-            import RPi.GPIO as GPIO
+            from gpiozero import Device
             hardware_status['gpio_available'] = True
         except ImportError:
-            hardware_status['gpio_error'] = 'RPi.GPIO not available - simulation mode'
+            hardware_status['gpio_error'] = 'gpiozero not available - simulation mode'
         
         hardware_status['pin_assignments'] = GPIOPinManager.PINS
     else:

@@ -59,10 +59,11 @@ chipurobo_rover_autonomy/
 ✅ **Configuration Management** - TOML-based settings  
 
 ### Hardware Support
-- **L298N Motor Driver** - Professional DC motor control with PWM
+- **L298N Motor Driver** - Professional DC motor control with PWM via gpiozero
 - **Hall Effect Encoders** - Built-in motor encoders for precise positioning
 - **MPU9255 9-Axis IMU** - Gyroscope, accelerometer, magnetometer
 - **Raspberry Pi AI Camera** - Computer vision with ArUco marker detection
+- **gpiozero Library** - Modern, Pythonic GPIO control (no root required)
 
 ### Software Architecture
 - **Type Hints** - Full type annotation
@@ -82,11 +83,13 @@ IMU I2C:      SDA=2, SCL=3
 Camera:       CSI Interface
 ```
 
+**Using gpiozero Library** - Modern, Pythonic GPIO interface for Raspberry Pi
+
 ## ⚡ Quick Start
 
 ### 1. Installation
 ```bash
-pip install flask flask-cors toml
+pip install -r requirements.txt
 ```
 
 ### 2. Run System

@@ -9,7 +9,7 @@ from typing import Tuple, Dict, Any
 
 # Core imports with error handling
 try:
-    import RPi.GPIO as GPIO
+    from gpiozero import Device
     RPI_AVAILABLE = True
 except ImportError:
     RPI_AVAILABLE = False

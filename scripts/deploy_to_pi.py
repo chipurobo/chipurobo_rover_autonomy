@@ -54,7 +54,7 @@ def create_requirements_if_missing():
         requirements = """flask>=2.0.0
 flask-cors>=3.0.0
 toml>=0.10.0
-RPi.GPIO>=0.7.0
+gpiozero>=1.6.0
 adafruit-circuitpython-mpu6050
 opencv-python
 picamera2

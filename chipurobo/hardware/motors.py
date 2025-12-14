@@ -9,7 +9,7 @@ from .gpio_manager import GPIOPinManager
 
 # Core imports with error handling
 try:
-    import RPi.GPIO as GPIO
+    from gpiozero import PWMOutputDevice, OutputDevice
     RPI_AVAILABLE = True
 except ImportError:
     RPI_AVAILABLE = False
@@ -37,30 +37,24 @@ class L298NMotorDriver:
             print("🔧 Motor driver running in simulation mode")
     
     def setup_gpio(self) -> None:
-        """Setup GPIO pins and PWM"""
+        """Setup GPIO pins and PWM with gpiozero"""
         try:
-            GPIO.setmode(GPIO.BCM)
-            GPIO.setwarnings(False)
+            # Initialize left motor with gpiozero
+            self.left_pwm = PWMOutputDevice(self.left_pins['pwm'], frequency=self.pwm_freq)
+            self.left_in1 = OutputDevice(self.left_pins['in1'])
+            self.left_in2 = OutputDevice(self.left_pins['in2'])
             
-            # Setup left motor pins
-            GPIO.setup(self.left_pins['pwm'], GPIO.OUT)
-            GPIO.setup(self.left_pins['in1'], GPIO.OUT)
-            GPIO.setup(self.left_pins['in2'], GPIO.OUT)
+            # Initialize right motor with gpiozero
+            self.right_pwm = PWMOutputDevice(self.right_pins['pwm'], frequency=self.pwm_freq)
+            self.right_in1 = OutputDevice(self.right_pins['in1'])
+            self.right_in2 = OutputDevice(self.right_pins['in2'])
             
-            # Setup right motor pins
-            GPIO.setup(self.right_pins['pwm'], GPIO.OUT)
-            GPIO.setup(self.right_pins['in1'], GPIO.OUT)
-            GPIO.setup(self.right_pins['in2'], GPIO.OUT)
-            
-            # Initialize PWM
-            self.left_pwm = GPIO.PWM(self.left_pins['pwm'], self.pwm_freq)
-            self.right_pwm = GPIO.PWM(self.right_pins['pwm'], self.pwm_freq)
-            
-            self.left_pwm.start(0)
-            self.right_pwm.start(0)
+            # Store direction control references
+            self.left_dir_pins = {'in1': self.left_in1, 'in2': self.left_in2}
+            self.right_dir_pins = {'in1': self.right_in1, 'in2': self.right_in2}
             
             self.initialized = True
-            print("🔧 L298N Motor Driver initialized:")
+            print("🔧 L298N Motor Driver initialized with gpiozero:")
             GPIOPinManager.print_pin_assignment()
             
         except Exception as e:
@@ -79,34 +73,33 @@ class L298NMotorDriver:
             return
             
         speed = max(0.0, min(1.0, abs(speed)))  # Clamp to 0-1
-        pwm_value = int(speed * 100)
         
         if motor == 'left':
-            pins = self.left_pins
-            pwm = self.left_pwm
+            pwm_device = self.left_pwm
+            dir_pins = self.left_dir_pins
         else:
-            pins = self.right_pins  
-            pwm = self.right_pwm
+            pwm_device = self.right_pwm
+            dir_pins = self.right_dir_pins
         
         if not RPI_AVAILABLE:
             print(f"🔧 {motor} motor: {direction} at {speed:.1%}")
             return
         
-        # Set direction
+        # Set direction using gpiozero
         if direction == 'forward':
-            GPIO.output(pins['in1'], GPIO.HIGH)
-            GPIO.output(pins['in2'], GPIO.LOW)
+            dir_pins['in1'].on()
+            dir_pins['in2'].off()
         elif direction == 'backward':
-            GPIO.output(pins['in1'], GPIO.LOW)
-            GPIO.output(pins['in2'], GPIO.HIGH)
+            dir_pins['in1'].off()
+            dir_pins['in2'].on()
         else:  # stop
-            GPIO.output(pins['in1'], GPIO.LOW)
-            GPIO.output(pins['in2'], GPIO.LOW)
-            pwm_value = 0
+            dir_pins['in1'].off()
+            dir_pins['in2'].off()
+            speed = 0
         
-        # Set speed
-        if pwm:
-            pwm.ChangeDutyCycle(pwm_value)
+        # Set speed using gpiozero PWM (value 0-1)
+        if pwm_device:
+            pwm_device.value = speed
     
     def drive_tank(self, left_speed: float, right_speed: float) -> None:
         """
@@ -172,8 +165,17 @@ class L298NMotorDriver:
         """Clean up GPIO resources"""
         if self.initialized:
             self.stop()
-            if self.left_pwm:
-                self.left_pwm.stop()
-            if self.right_pwm:
-                self.right_pwm.stop()
+            # Close gpiozero devices
+            if hasattr(self, 'left_pwm') and self.left_pwm:
+                self.left_pwm.close()
+            if hasattr(self, 'right_pwm') and self.right_pwm:
+                self.right_pwm.close()
+            if hasattr(self, 'left_in1') and self.left_in1:
+                self.left_in1.close()
+            if hasattr(self, 'left_in2') and self.left_in2:
+                self.left_in2.close()
+            if hasattr(self, 'right_in1') and self.right_in1:
+                self.right_in1.close()
+            if hasattr(self, 'right_in2') and self.right_in2:
+                self.right_in2.close()
             print("🔧 Motor driver cleanup completed")
