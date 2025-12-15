@@ -4,7 +4,9 @@ Vision Positioning System for ChipuRobo
 Computer vision positioning using ArUco markers and Raspberry Pi camera
 """
 
+
 import math
+import numpy as np
 from typing import Optional, Tuple, Dict, Any, List
 
 # Core imports with error handling

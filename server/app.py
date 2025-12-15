@@ -11,7 +11,8 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
+import os
 from flask_cors import CORS
 import json
 import os
@@ -19,6 +20,19 @@ import datetime
 import threading
 import time
 import signal
+
+
+# Initialize Flask app before using CORS or defining routes
+app = Flask(__name__)
+CORS(app)  # Enable CORS for web interface
+
+# Serve the mission control web interface at root
+@app.route('/')
+def serve_mission_control():
+    return send_from_directory(
+        os.path.join(PROJECT_ROOT, 'web', 'templates'),
+        'mission_control.html'
+    )
 
 # Import unified robot system
 try:
@@ -29,9 +43,6 @@ try:
 except ImportError as e:
     print(f"⚠️ ChipuRobot not available: {e}")
     ROBOT_AVAILABLE = False
-
-app = Flask(__name__)
-CORS(app)  # Enable CORS for web interface
 
 # Data storage directories
 DATA_DIR = Path(__file__).parent / "data"

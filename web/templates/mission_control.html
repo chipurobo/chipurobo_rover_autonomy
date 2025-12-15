@@ -22,11 +22,15 @@
             border: 3px solid #333;
             border-radius: 10px;
             padding: 10px;
+            flex: 1 1 0;
+            min-width: 0;
         }
         canvas {
             border: 2px solid #333;
             background: #2e7d32;
             cursor: crosshair;
+            max-width: 100%;
+            height: auto;
         }
         .controls {
             background: white;
@@ -34,7 +38,9 @@
             border-radius: 10px;
             padding: 20px;
             width: 350px;
+            min-width: 250px;
             height: fit-content;
+            box-sizing: border-box;
         }
         .admin-controls {
             background: #fff3e0;
@@ -59,7 +65,6 @@
         .field-btn { background: #ff9800; color: white; }
         .mode-btn { background: #9c27b0; color: white; }
         .active-mode { background: #4caf50 !important; }
-        
         .mode-selector {
             display: flex;
             gap: 5px;
@@ -71,7 +76,6 @@
             margin: 0;
             font-size: 12px;
         }
-        
         .waypoint-list {
             background: #f9f9f9;
             border: 1px solid #ccc;
@@ -122,6 +126,52 @@
             border-radius: 5px;
             margin: 10px 0;
             font-size: 12px;
+        }
+
+        /* Responsive styles */
+        @media (max-width: 1100px) {
+            .container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .controls {
+                width: 100%;
+                min-width: 0;
+                margin-top: 20px;
+            }
+            .canvas-container {
+                width: 100%;
+                min-width: 0;
+            }
+        }
+        @media (max-width: 700px) {
+            body {
+                padding: 5px;
+            }
+            .controls {
+                padding: 10px;
+            }
+            .admin-controls {
+                padding: 10px;
+            }
+            .instructions {
+                padding: 8px;
+            }
+            .canvas-container {
+                padding: 2px;
+            }
+        }
+        @media (max-width: 500px) {
+            h1 {
+                font-size: 1.2em;
+            }
+            .controls {
+                font-size: 12px;
+            }
+            button {
+                font-size: 12px;
+                padding: 8px;
+            }
         }
     </style>
 </head>

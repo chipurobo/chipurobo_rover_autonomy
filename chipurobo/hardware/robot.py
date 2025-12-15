@@ -10,7 +10,7 @@ import threading
 from typing import Dict, Any, Optional, List
 
 from .gpio_manager import GPIOPinManager
-from .motors import L298NMotorDriver
+from .motors import forward, backward, left, right, stop
 from .encoders import MotorEncoder
 from ..sensors.imu import MPU9255_IMU
 from ..vision.camera import VisionPositioning
@@ -45,10 +45,7 @@ class ChipuRobot:
         # Print GPIO pin assignments
         GPIOPinManager.print_pin_assignment()
         
-        # Initialize motor driver
-        self.motor_driver = L298NMotorDriver(
-            pwm_freq=self.config.get('pwmFreq', 1000)
-        )
+    # Motor driver removed; using direct motor functions
         
         # Initialize encoders
         left_pins, right_pins = GPIOPinManager.get_encoder_pins()
@@ -99,7 +96,7 @@ class ChipuRobot:
     def print_capabilities(self) -> None:
         """Print robot capabilities based on available hardware"""
         print("🔧 Robot Capabilities:")
-        print(f"   ⚙️ Motor Control: {'✅ Active' if self.motor_driver.initialized or not RPI_AVAILABLE else '❌ Failed'}")
+        print(f"   ⚙️ Motor Control: {'✅ Active' if RPI_AVAILABLE else '❌ Failed'}")
         print(f"   📏 Left Encoder: {'✅ Active' if self.left_encoder.active or not RPI_AVAILABLE else '❌ Failed'}")
         print(f"   📏 Right Encoder: {'✅ Active' if self.right_encoder.active or not RPI_AVAILABLE else '❌ Failed'}")
         print(f"   🧭 IMU: {'✅ Active' if self.imu.available or not RPI_AVAILABLE else '❌ Failed'}")
@@ -214,7 +211,7 @@ class ChipuRobot:
             },
             'imu': self.imu.get_all_data(),
             'vision': self.vision.get_status(),
-            'motor_driver': self.motor_driver.get_status()
+            # 'motor_driver': self.motor_driver.get_status()  # Removed
         }
     
     def get_system_status(self) -> Dict[str, Any]:
@@ -224,7 +221,7 @@ class ChipuRobot:
             'config': self.config,
             'hardware': {
                 'gpio_manager': GPIOPinManager.get_pin_usage_summary(),
-                'motor_driver': self.motor_driver.get_status(),
+                # 'motor_driver': self.motor_driver.get_status(),  # Removed
                 'encoders': {
                     'left': self.left_encoder.get_status(),
                     'right': self.right_encoder.get_status()
@@ -242,15 +239,39 @@ class ChipuRobot:
     # Motor control methods (delegate to motor driver)
     def drive_tank(self, left_speed: float, right_speed: float) -> None:
         """Tank drive control (-1.0 to 1.0 for each side)"""
-        self.motor_driver.drive_tank(left_speed, right_speed)
-    
+        # Only support full forward, backward, left, right, or stop
+        if left_speed > 0 and right_speed > 0:
+            forward()
+        elif left_speed < 0 and right_speed < 0:
+            backward()
+        elif left_speed < 0 and right_speed > 0:
+            left()
+        elif left_speed > 0 and right_speed < 0:
+            right()
+        else:
+            stop()
+
     def drive_arcade(self, forward_speed: float, turn_rate: float) -> None:
         """Arcade drive control (-1.0 to 1.0 for forward and turn)"""
-        self.motor_driver.drive_arcade(forward_speed, turn_rate)
-    
+        # Simple mapping: prioritize forward/backward, then turning
+        if abs(forward_speed) > abs(turn_rate):
+            if forward_speed > 0:
+                forward()
+            elif forward_speed < 0:
+                backward()
+            else:
+                stop()
+        else:
+            if turn_rate > 0:
+                right()
+            elif turn_rate < 0:
+                left()
+            else:
+                stop()
+
     def stop(self) -> None:
         """Stop all motors"""
-        self.motor_driver.stop()
+        stop()
     
     def execute_mission(self, mission_data: Dict[str, Any]) -> None:
         """
@@ -622,7 +643,7 @@ class ChipuRobot:
             self.obstacle_avoidance.reset_obstacle_tracking()
         
         # Cleanup hardware
-        self.motor_driver.cleanup()
+    # self.motor_driver.cleanup()  # Removed
         self.left_encoder.cleanup()
         self.right_encoder.cleanup()
         self.vision.cleanup()
